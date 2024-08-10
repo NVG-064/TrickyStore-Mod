@@ -102,8 +102,12 @@ if [ ! -d "$CONFIG_DIR" ]; then
   mkdir -p "$CONFIG_DIR"
 fi
 
+if [ ! -f "$CONFIG_DIR/keybox.xml" ]; then
 backup_file "$CONFIG_DIR/spoof_build_vars"
 touch "$CONFIG_DIR/spoof_build_vars"
+else
+  : # Nothing
+fi
 
 if [ ! -f "$CONFIG_DIR/keybox.xml" ]; then
   ui_print "- Adding default software keybox"
