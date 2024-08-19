@@ -20,13 +20,15 @@ private fun updateTargetPackages(f: File?) = runCatching {
         // "all" found, target all installed packages
         val packageManager = getPm()
         packageManager?.let { pm ->
-            hackPackages.addAll(pm.getInstalledApplications(0).map { it.packageName })
+            // Use a valid method to get installed applications
+            val installedApps = pm.getInstalledPackages(0).map { it.packageName }
+            hackPackages.addAll(installedApps)
         }
     } else {
         // Process individual package names as before
-        lines.forEach {
-            if (it.isNotBlank() && !it.startsWith("#")) {
-                val n = it.trim()
+        lines.forEach { line ->
+            if (line.isNotBlank() && !line.startsWith("#")) {
+                val n = line.trim()
                 if (n.endsWith("!"))
                     generatePackages.add(n.removeSuffix("!").trim())
                 else
