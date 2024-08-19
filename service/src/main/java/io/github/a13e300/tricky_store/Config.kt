@@ -10,20 +10,35 @@ object Config {
     private val hackPackages = mutableSetOf<String>()
     private val generatePackages = mutableSetOf<String>()
 
-    private fun updateTargetPackages(f: File?) = runCatching {
-        hackPackages.clear()
-        generatePackages.clear()
-        f?.readLines()?.forEach {
+private fun updateTargetPackages(f: File?) = runCatching {
+    hackPackages.clear()
+    generatePackages.clear()
+
+    val lines = f?.readLines() ?: return@runCatching
+
+    if (lines.any { it.trim() == "all" }) {
+        // "all" found, target all installed packages
+        val packageManager = getPm()
+        packageManager?.let { pm ->
+            hackPackages.addAll(pm.getInstalledApplications(0).map { it.packageName })
+        }
+    } else {
+        // Process individual package names as before
+        lines.forEach {
             if (it.isNotBlank() && !it.startsWith("#")) {
                 val n = it.trim()
-                if (n.endsWith("!")) generatePackages.add(n.removeSuffix("!").trim())
-                else hackPackages.add(n)
+                if (n.endsWith("!"))
+                    generatePackages.add(n.removeSuffix("!").trim())
+                else
+                    hackPackages.add(n)
             }
         }
-        Logger.i("update hack packages: $hackPackages, generate packages=$generatePackages")
-    }.onFailure {
-        Logger.e("failed to update target files", it)
     }
+
+    Logger.i("update hack packages: $hackPackages, generate packages=$generatePackages")
+}.onFailure {
+    Logger.e("failed to update target files", it)
+}
 
     private fun updateKeyBox(f: File?) = runCatching {
         CertHack.readFromXml(f?.readText())
