@@ -1,3 +1,9 @@
+# Fork Warning
+
+This code is in early stages and from an older version of Tricky Store since Tricky Store is now closed-source. This code needs fixes and future improvements - if your're dev, feel free to use it as an base (start point) but if you're an end/advanced user, please backup your data and be prepared for facing bootloops.
+
+Use this code at your **own** risk.
+
 # Tricky Store
 
 A trick of keystore. **Android 12 or above is required**.
