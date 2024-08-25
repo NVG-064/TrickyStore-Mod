@@ -1,9 +1,8 @@
-# 1.1.2
+# 1.1.3
 
-增加 arm 支持
-再次修复 magisk 上更新可能导致自动禁用的问题
+修复若干 bug
 
 ---
 
-Add arm support
-Fix automatic disabling after upgrade on magisk again
+Fix some bugs
+
