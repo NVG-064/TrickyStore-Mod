@@ -5,7 +5,7 @@ import java.security.MessageDigest
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-    verifySelf()
+    //verifySelf() //Remove check unoffical version :))
     Logger.i("Welcome to TrickyStore!")
     while (true) {
         if (!KeystoreInterceptor.tryRunKeystoreInterceptor()) {

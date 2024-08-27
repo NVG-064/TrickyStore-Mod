@@ -288,7 +288,7 @@ inline bool operator _op_ (const U* o) const {                   \
         if (!other) return nullptr;
 
         auto refs = other->getWeakRefs();
-        refs->incWeakRequireWeak(other);
+        refs->incWeak(other);
 
         wp<T> ret;
         ret.m_ptr = other;
