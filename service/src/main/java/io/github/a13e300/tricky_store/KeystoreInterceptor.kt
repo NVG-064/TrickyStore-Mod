@@ -38,6 +38,8 @@ object KeystoreInterceptor : BinderInterceptor() {
         getTransactCode(IKeystoreService.Stub::class.java, "attestKey")
     private lateinit var keystore: IBinder
 
+    private const val DESCRIPTOR = "android.security.keystore.IKeystoreService"
+
     private val KeyArguments = HashMap<Key,CertHack.KeyGenParameters>()
     private val KeyPairs = HashMap<Key, KeyPair>()
     private val Chains = HashMap<Key, List<ByteArray>>()
@@ -53,11 +55,12 @@ object KeystoreInterceptor : BinderInterceptor() {
     ): Result {
         if (CertHack.canHack()) {
             if (code == getTransaction) {
-                Logger.i("getTransaction running pre  $target uid=$callingUid pid=$callingPid dataSz=${data.dataSize()}")
                 if (Config.needGenerate(callingUid))
                     kotlin.runCatching {
                         val p = Parcel.obtain()
+                        data.enforceInterface(DESCRIPTOR)
                         val alias = data.readString()!!
+                        Logger.i("getTransaction uid $callingUid alias $alias")
                         //val uid = data.readInt()
                         val chain = Chains[Key(callingUid,alias.split("_")[1])]!!
                         if (alias.startsWith(Credentials.USER_CERTIFICATE)) {
@@ -69,17 +72,19 @@ object KeystoreInterceptor : BinderInterceptor() {
                             p.writeByteArray(Utils.toBytesFromListByte(chain.subList(1,chain.size)))
                             return OverrideReply(0, p)
                         }
+                    }.onFailure {
+                        Logger.e("getTransaction error", it)
                     }
                 else if (Config.needHack(callingUid)) return Continue
                 return Skip
             } else if(Config.needGenerate(callingUid)){
                 when (code) {
                     generateKeyTransaction -> {
-                        Logger.i("generateKeyTransaction running pre uid=$callingUid pid=$callingPid")
                         kotlin.runCatching {
-                            data.enforceInterface("android.security.keystore.IKeystoreService")
+                            data.enforceInterface(DESCRIPTOR)
                             val callback = IKeystoreKeyCharacteristicsCallback.Stub.asInterface(data.readStrongBinder())
                             val alias = data.readString()!!.split("_")[1]
+                            Logger.i("generateKeyTransaction uid $callingUid alias $alias")
                             val check = data.readInt()
                             val kma = KeymasterArguments()
                             val kgp = CertHack.KeyGenParameters()
@@ -93,20 +98,19 @@ object KeystoreInterceptor : BinderInterceptor() {
                                 kgp.purpose = kma.getEnums(KeymasterDefs.KM_TAG_PURPOSE)
                                 kgp.digest = kma.getEnums(KeymasterDefs.KM_TAG_DIGEST)
                                 kgp.certificateNotBefore = kma.getDate(KeymasterDefs.KM_TAG_ACTIVE_DATETIME, Date())
+                                if(kgp.algorithm == KeymasterDefs.KM_ALGORITHM_RSA){
+                                    try {
+                                        val getArgumentByTag = KeymasterArguments::class.java.getDeclaredMethods().first{ it.name == "getArgumentByTag" }
+                                        getArgumentByTag.isAccessible = true
+                                        val rsaArgument = getArgumentByTag.invoke(kma, KeymasterDefs.KM_TAG_RSA_PUBLIC_EXPONENT)
 
-                                try {
-                                    val getArgumentByTag = KeymasterArguments::class.java.getDeclaredMethods().first{ it.name == "getArgumentByTag" }
-                                    getArgumentByTag.isAccessible = true
-                                    val rsaArgument = getArgumentByTag.invoke(kma, KeymasterDefs.KM_TAG_RSA_PUBLIC_EXPONENT)
-
-                                    val getLongTagValue = KeymasterArguments::class.java.getDeclaredMethods().first{ it.name == "getLongTagValue" }
-                                    getLongTagValue.isAccessible = true
-                                    kgp.rsaPublicExponent = getLongTagValue.invoke(kma, rsaArgument) as BigInteger
-                                } catch (ex : Exception){
-                                    Logger.e("Read rsaPublicExponent error: $ex")
+                                        val getLongTagValue = KeymasterArguments::class.java.getDeclaredMethods().first{ it.name == "getLongTagValue" }
+                                        getLongTagValue.isAccessible = true
+                                        kgp.rsaPublicExponent = getLongTagValue.invoke(kma, rsaArgument) as BigInteger
+                                    } catch (ex : Exception){
+                                        Logger.e("Read rsaPublicExponent error", ex)
+                                    }
                                 }
-
-
                                 KeyArguments[Key(callingUid, alias)] = kgp
                             }
                             //val entropy = data.createByteArray()
@@ -134,11 +138,11 @@ object KeystoreInterceptor : BinderInterceptor() {
                         }
                     }
                     getKeyCharacteristicsTransaction -> {
-                        Logger.i("getKeyCharacteristicsTransaction running pre uid=$callingUid pid=$callingPid")
                         kotlin.runCatching {
-                            data.enforceInterface("android.security.keystore.IKeystoreService")
+                            data.enforceInterface(DESCRIPTOR)
                             val callback = IKeystoreKeyCharacteristicsCallback.Stub.asInterface(data.readStrongBinder())
                             val alias = data.readString()!!.split("_")[1]
+                            Logger.i("getKeyCharacteristicsTransaction uid $callingUid alias $alias")
             //                        var check = data.readInt()
             //                        if(check == 1){
             //                            data.createByteArray()
@@ -173,11 +177,11 @@ object KeystoreInterceptor : BinderInterceptor() {
                         }
                     }
                     exportKeyTransaction -> {
-                        Logger.i("exportKeyTransaction running pre uid=$callingUid pid=$callingPid")
                         kotlin.runCatching {
-                            data.enforceInterface("android.security.keystore.IKeystoreService")
+                            data.enforceInterface(DESCRIPTOR)
                             val callback = IKeystoreExportKeyCallback.Stub.asInterface(data.readStrongBinder())
                             val alias = data.readString()!!.split("_")[1]
+                            Logger.i("exportKeyTransaction uid $callingUid alias $alias")
             //                        val format = data.readInt()
             //                        var check = data.readInt()
             //                        if(check == 1){
@@ -210,11 +214,11 @@ object KeystoreInterceptor : BinderInterceptor() {
                         }
                     }
                     attestKeyTransaction -> {
-                        Logger.i("attestKeyTransaction running pre uid=$callingUid pid=$callingPid")
                         kotlin.runCatching {
-                            data.enforceInterface("android.security.keystore.IKeystoreService")
+                            data.enforceInterface(DESCRIPTOR)
                             val ccp = IKeystoreCertificateChainCallback.Stub.asInterface(data.readStrongBinder())
                             val alias = data.readString()!!.split("_")[1]
+                            Logger.i("attestKeyTransaction uid $callingUid alias $alias")
                             val check = data.readInt()
                             val kma = KeymasterArguments()
                             if(check == 1){
