@@ -19,6 +19,7 @@ import android.security.keystore.KeystoreResponse
 import io.github.a13e300.tricky_store.binder.BinderInterceptor
 import io.github.a13e300.tricky_store.keystore.CertHack
 import io.github.a13e300.tricky_store.keystore.Utils
+import java.math.BigInteger
 import java.security.KeyPair
 import java.util.Date
 import kotlin.system.exitProcess
@@ -92,9 +93,19 @@ object KeystoreInterceptor : BinderInterceptor() {
                                 kgp.purpose = kma.getEnums(KeymasterDefs.KM_TAG_PURPOSE)
                                 kgp.digest = kma.getEnums(KeymasterDefs.KM_TAG_DIGEST)
                                 kgp.certificateNotBefore = kma.getDate(KeymasterDefs.KM_TAG_ACTIVE_DATETIME, Date())
-                                // can't read KeymasterDefs.KM_TAG_RSA_PUBLIC_EXPONENT
-                                // reason: tag is KM_ULONG, getUnsignedLongs require tag: KM_ULONG_REP
-                                //kgp.rsaPublicExponent = kma.getUnsignedLongs(KeymasterDefs.KM_TAG_RSA_PUBLIC_EXPONENT).getOrNull(0)
+
+                                try {
+                                    val getArgumentByTag = KeymasterArguments::class.java.getDeclaredMethods().first{ it.name == "getArgumentByTag" }
+                                    getArgumentByTag.isAccessible = true
+                                    val rsaArgument = getArgumentByTag.invoke(kma, KeymasterDefs.KM_TAG_RSA_PUBLIC_EXPONENT)
+
+                                    val getLongTagValue = KeymasterArguments::class.java.getDeclaredMethods().first{ it.name == "getLongTagValue" }
+                                    getLongTagValue.isAccessible = true
+                                    kgp.rsaPublicExponent = getLongTagValue.invoke(kma, rsaArgument) as BigInteger
+                                } catch (ex : Exception){
+                                    Logger.e("Read rsaPublicExponent error: $ex")
+                                }
+
 
                                 KeyArguments[Key(callingUid, alias)] = kgp
                             }
