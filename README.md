@@ -1,6 +1,6 @@
 # Tricky Store
 
-A trick of keystore. **Android 12 or above is required**.
+A trick of keystore. **Only Android 10, 11**.
 
 ## Usage
 
@@ -85,7 +85,6 @@ com.google.android.gms!
 ## TODO
 
 - Support App Attest Key.
-- [Support Android 11 and below.](https://github.com/5ec1cff/TrickyStore/issues/25#issuecomment-2250588463)
 - Support automatic selection mode.
 
 PR is welcomed.

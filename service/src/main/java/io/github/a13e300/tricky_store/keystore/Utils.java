@@ -13,6 +13,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public class Utils {
     private final static String TAG = "Utils";
@@ -48,6 +49,30 @@ public class Utils {
             return byteArrayOutputStream.toByteArray();
         } catch (Exception e) {
             Log.w(TAG, "Couldn't getBytes certificates in keystore", e);
+            return null;
+        }
+    }
+    public static byte[] toBytesFromListByte(Collection<byte[]> certificates) {
+        try {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            for (byte[] cert : certificates) {
+                byteArrayOutputStream.write(cert);
+            }
+            return byteArrayOutputStream.toByteArray();
+        } catch (Exception e) {
+            Log.w(TAG, "Couldn't getBytes certificates in keystore", e);
+            return null;
+        }
+    }
+    public static List<byte[]> toListBytes(Collection<Certificate> certificates) {
+        try {
+            List<byte[]> chain = new ArrayList<>();
+            for (Certificate cert : certificates) {
+                chain.add(cert.getEncoded());
+            }
+            return chain;
+        } catch (Exception e) {
+            Log.w(TAG, "Couldn't toListBytes certificates in keystore", e);
             return null;
         }
     }
