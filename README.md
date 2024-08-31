@@ -1,6 +1,6 @@
 # Tricky Store
 
-A trick of keystore. **Only Android 10, 11**.
+A trick of keystore. **Android 10 or above is required**.
 
 ## Usage
 
