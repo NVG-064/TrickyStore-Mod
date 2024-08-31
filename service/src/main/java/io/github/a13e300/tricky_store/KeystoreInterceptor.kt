@@ -18,7 +18,6 @@ import android.security.keystore.IKeystoreService
 import android.security.keystore.KeystoreResponse
 import io.github.a13e300.tricky_store.binder.BinderInterceptor
 import io.github.a13e300.tricky_store.keystore.CertHack
-import io.github.a13e300.tricky_store.keystore.Utils
 import java.math.BigInteger
 import java.security.KeyPair
 import java.util.Date
@@ -42,7 +41,6 @@ object KeystoreInterceptor : BinderInterceptor() {
 
     private val KeyArguments = HashMap<Key,CertHack.KeyGenParameters>()
     private val KeyPairs = HashMap<Key, KeyPair>()
-    private val Chains = HashMap<Key, List<ByteArray>>()
     data class Key(val uid: Int, val alias: String)
 
     override fun onPreTransact(
@@ -55,28 +53,12 @@ object KeystoreInterceptor : BinderInterceptor() {
     ): Result {
         if (CertHack.canHack()) {
             if (code == getTransaction) {
-                if (Config.needGenerate(callingUid))
-                    kotlin.runCatching {
-                        val p = Parcel.obtain()
-                        data.enforceInterface(DESCRIPTOR)
-                        val alias = data.readString()!!
-                        Logger.i("getTransaction uid $callingUid alias $alias")
-                        //val uid = data.readInt()
-                        val chain = Chains[Key(callingUid,alias.split("_")[1])]!!
-                        if (alias.startsWith(Credentials.USER_CERTIFICATE)) {
-                            p.writeNoException()
-                            p.writeByteArray(chain[0])
-                            return OverrideReply(0, p)
-                        } else if(alias.startsWith(Credentials.CA_CERTIFICATE)){
-                            p.writeNoException()
-                            p.writeByteArray(Utils.toBytesFromListByte(chain.subList(1,chain.size)))
-                            return OverrideReply(0, p)
-                        }
-                    }.onFailure {
-                        Logger.e("getTransaction error", it)
-                    }
-                else if (Config.needHack(callingUid)) return Continue
-                return Skip
+                if(Config.needHack(callingUid)) {
+                    return Continue
+                } else if(Config.needGenerate(callingUid)){
+                    //needn't intercept getTransaction pre because it was stored in keystore
+                    return Skip
+                }
             } else if(Config.needGenerate(callingUid)){
                 when (code) {
                     generateKeyTransaction -> {
@@ -193,7 +175,7 @@ object KeystoreInterceptor : BinderInterceptor() {
             //                        }
             //                        val uid = data.readInt()
 
-                            val kp = CertHack.generateKeyPair1(KeyArguments[Key(callingUid, alias)])
+                            val kp = CertHack.generateKeyPair(KeyArguments[Key(callingUid, alias)])
                             KeyPairs[Key(callingUid,alias)] = kp
 
                             val erP = Parcel.obtain()
@@ -216,7 +198,7 @@ object KeystoreInterceptor : BinderInterceptor() {
                     attestKeyTransaction -> {
                         kotlin.runCatching {
                             data.enforceInterface(DESCRIPTOR)
-                            val ccp = IKeystoreCertificateChainCallback.Stub.asInterface(data.readStrongBinder())
+                            val callback = IKeystoreCertificateChainCallback.Stub.asInterface(data.readStrongBinder())
                             val alias = data.readString()!!.split("_")[1]
                             Logger.i("attestKeyTransaction uid $callingUid alias $alias")
                             val check = data.readInt()
@@ -235,12 +217,10 @@ object KeystoreInterceptor : BinderInterceptor() {
                                 val key = Key(callingUid, alias)
                                 val ka = KeyArguments[key]!!
                                 ka.attestationChallenge = attestationChallenge
-                                val chain = CertHack.generateKeyPair2(callingUid, ka, attestationChallenge, KeyPairs[key])
-
-                                Chains[Key(callingUid, alias)] = chain
+                                val chain = CertHack.generateChain(callingUid, ka, KeyPairs[key])
 
                                 val kcc = KeymasterCertificateChain(chain)
-                                ccp.onFinished(ksr,kcc)
+                                callback.onFinished(ksr,kcc)
                             }
 
                             val p = Parcel.obtain()
@@ -272,7 +252,7 @@ object KeystoreInterceptor : BinderInterceptor() {
         val p = Parcel.obtain()
         Logger.d("intercept post $target uid=$callingUid pid=$callingPid dataSz=${data.dataSize()} replySz=${reply.dataSize()}")
         try {
-            data.setDataPosition(104)
+            data.enforceInterface(DESCRIPTOR)
             val alias = data.readString() ?: ""
             var response = reply.createByteArray()
             if (alias.startsWith(Credentials.USER_CERTIFICATE)) {

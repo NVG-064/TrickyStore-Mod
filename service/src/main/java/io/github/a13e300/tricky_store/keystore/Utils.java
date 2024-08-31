@@ -52,18 +52,6 @@ public class Utils {
             return null;
         }
     }
-    public static byte[] toBytesFromListByte(Collection<byte[]> certificates) {
-        try {
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            for (byte[] cert : certificates) {
-                byteArrayOutputStream.write(cert);
-            }
-            return byteArrayOutputStream.toByteArray();
-        } catch (Exception e) {
-            Log.w(TAG, "Couldn't getBytes certificates in keystore", e);
-            return null;
-        }
-    }
     public static List<byte[]> toListBytes(Collection<Certificate> certificates) {
         try {
             List<byte[]> chain = new ArrayList<>();

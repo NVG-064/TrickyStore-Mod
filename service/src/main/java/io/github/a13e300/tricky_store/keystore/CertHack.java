@@ -362,8 +362,8 @@ public final class CertHack {
         return certificate;
     }
 
-    public static KeyPair generateKeyPair1(KeyGenParameters params){
-        KeyPair kp = null;
+    public static KeyPair generateKeyPair(KeyGenParameters params){
+        KeyPair kp;
         try {
             var algo = params.algorithm;
             if (algo == Algorithm.EC) {
@@ -382,7 +382,7 @@ public final class CertHack {
         }
         return null;
     }
-    public static List<byte[]> generateKeyPair2(int uid, KeyGenParameters params, byte[] attestationChallenge, KeyPair kp){
+    public static List<byte[]> generateChain(int uid, KeyGenParameters params, KeyPair kp){
         KeyPair rootKP;
         X500Name issuer;
         KeyBox keyBox = null;
