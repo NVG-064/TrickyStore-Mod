@@ -92,8 +92,8 @@ chmod 755 "$MODPATH/inject"
 CONFIG_DIR=/data/adb/tricky_store
 if [ ! -d "$CONFIG_DIR" ]; then
   ui_print "- Adding configuration directory"
-  extract "$ZIPFILE" 'spoof_build_vars' "$TMPDIR"
-  mv "$TMPDIR/spoof_build_vars" "$CONFIG_DIR/spoof_build_vars"
+  mkdir -p "$CONFIG_DIR"
+  [ ! -f "$CONFIG_DIR/spoof_build_vars" ] && touch "$CONFIG_DIR/spoof_build_vars"
 fi
 if [ ! -f "$CONFIG_DIR/keybox.xml" ]; then
   ui_print "- Adding valid keybox"
