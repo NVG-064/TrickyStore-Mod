@@ -94,6 +94,7 @@ if [ ! -d "$CONFIG_DIR" ]; then
   ui_print "- Adding configuration directory"
   mkdir -p "$CONFIG_DIR"
   [ ! -f "$CONFIG_DIR/spoof_build_vars" ] && touch "$CONFIG_DIR/spoof_build_vars"
+  extract "$ZIPFILE" 'spoof_build_vars' "$TMPDIR"
   mv "$TMPDIR/spoof_build_vars" "$CONFIG_DIR/spoof_build_vars"
 fi
 if [ ! -f "$CONFIG_DIR/keybox.xml" ]; then
