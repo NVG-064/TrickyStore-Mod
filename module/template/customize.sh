@@ -96,12 +96,12 @@ if [ ! -d "$CONFIG_DIR" ]; then
   mv "$TMPDIR/spoof_build_vars" "$CONFIG_DIR/spoof_build_vars"
 fi
 if [ ! -f "$CONFIG_DIR/keybox.xml" ]; then
-  ui_print "- Adding default software keybox"
+  ui_print "- Adding valid keybox"
   extract "$ZIPFILE" 'keybox.xml' "$TMPDIR"
   mv "$TMPDIR/keybox.xml" "$CONFIG_DIR/keybox.xml"
 fi
 if [ ! -f "$CONFIG_DIR/target.txt" ]; then
-  ui_print "- Adding default target scope"
+  ui_print "- Adding target scope"
   extract "$ZIPFILE" 'target.txt' "$TMPDIR"
   mv "$TMPDIR/target.txt" "$CONFIG_DIR/target.txt"
 fi
